@@ -1,3 +1,7 @@
+using E_CommerceDAL.Data.Contexts;
+using E_CommerceDAL.Data.DataSeeding;
+using Microsoft.EntityFrameworkCore;
+
 namespace E_CommercePL
 {
     public class Program
@@ -7,9 +11,29 @@ namespace E_CommercePL
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
+
             builder.Services.AddControllersWithViews();
 
+            // Add DbContext Service
+
+            // Pass options to base class throw instructor in E_CommerceDbContext.
+            builder.Services.AddDbContext<E_CommerceDbContext>(options =>
+            {
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+            });
+
             var app = builder.Build();
+
+            #region Data Seeding
+
+            // Create a temporary scope because DbContext is scoped, 
+            // and there is no HTTP request during Data Seeding
+            var Scope = app.Services.CreateScope(); // Create Scope
+            var dbContextObj = Scope.ServiceProvider.GetRequiredService<E_CommerceDbContext>(); // Create obj from context
+
+            E_CommerceDataSeeding.SeedData(dbContextObj);
+
+            #endregion
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
